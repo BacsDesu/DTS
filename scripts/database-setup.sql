@@ -1,4 +1,7 @@
--- Create profiles table (extends auth.users)
+-- DTS Database Setup Script
+-- Run this in Supabase SQL Editor to create all tables and policies
+
+-- Create profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   username TEXT UNIQUE,
@@ -41,9 +44,11 @@ ALTER TABLE public.routed_logs ENABLE ROW LEVEL SECURITY;
 -- Profiles RLS Policies
 CREATE POLICY "Users can view all profiles" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can delete own profile" ON public.profiles FOR DELETE USING (auth.uid() = id);
 
 -- Logs RLS Policies
-CREATE POLICY "Users can view their own logs" ON public.logs FOR SELECT USING (auth.uid() = user_id OR auth.uid() IN (SELECT id FROM auth.users WHERE raw_user_meta_data->>'is_admin' = 'true'));
+CREATE POLICY "Users can view their own logs" ON public.logs FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own logs" ON public.logs FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own logs" ON public.logs FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own logs" ON public.logs FOR DELETE USING (auth.uid() = user_id);
@@ -54,3 +59,11 @@ CREATE POLICY "Users can view routed logs for their documents" ON public.routed_
   user_id = auth.uid()
 );
 CREATE POLICY "Users can insert routed logs" ON public.routed_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can view own routed logs" ON public.routed_logs FOR SELECT USING (auth.uid() = user_id);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS logs_user_id_idx ON public.logs(user_id);
+CREATE INDEX IF NOT EXISTS logs_status_idx ON public.logs(status);
+CREATE INDEX IF NOT EXISTS logs_created_at_idx ON public.logs(created_at);
+CREATE INDEX IF NOT EXISTS routed_logs_log_id_idx ON public.routed_logs(log_id);
+CREATE INDEX IF NOT EXISTS routed_logs_user_id_idx ON public.routed_logs(user_id);
