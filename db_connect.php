@@ -9,11 +9,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Database credentials
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'doc_manager');
+// Database credentials - Use environment variables for production
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_NAME', getenv('DB_NAME') ?: 'doc_manager');
 
 try {
     // Create PDO connection
